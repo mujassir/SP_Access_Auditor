@@ -1,1 +1,1 @@
-# SP_Access_Auditor
+# SharePoint Access Auditor
