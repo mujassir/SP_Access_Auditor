@@ -22,7 +22,13 @@ namespace AccessAuditor
 
         private void LoginForm_Load(object sender, EventArgs e)
         {
-
+            var debug = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["debug"]);
+            if (debug)
+            {
+                txtSPSiteURL.Text = "https://chaqua.sharepoint.com/";
+                txtUsername.Text = "mujassir@chaqua.org";
+                txtPassword.Text = "lM6oJ9xX9jK2sY0y";
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -48,7 +54,7 @@ namespace AccessAuditor
                          OnValidate.Invoke(txtSPSiteURL.Text, txtUsername.Text, txtPassword.Text);
                      }
                  });
-               
+
             }
             catch (Exception ex)
             {

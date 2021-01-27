@@ -19,7 +19,86 @@ namespace AccessAuditor.BusinessLogic
             SiteCache = new SPSite();
         }
 
+        public static void LoadSiteDetails(ClientContext clientContext, Web web, SPSite site)
+        {
+
+            clientContext.Load(web.Lists);
+            clientContext.Load(web.Webs);
+
+            // Execute the query to the server.
+            clientContext.ExecuteQuery();
+
+            var lists = new List<SPList>();
+            foreach (var item in web.Lists)
+            {
+                lists.Add(new SPList()
+                {
+                    Title = item.Title,
+                    Permissions = GetSitePermissionDetails(clientContext, web, item.Title)
+                });
+            }
+            site.Lists = lists;
+            
+            
+
+            var sites = new List<SPSite>();
+            foreach (var subWeb in web.Webs)
+            {
+
+                var currentSite = new SPSite()
+                {
+                    Title = subWeb.Title,
+                    Permissions = GetSitePermissionDetails(clientContext, subWeb),
+
+                };
+                LoadSiteDetails(clientContext, subWeb, currentSite);
+                sites.Add(currentSite);
+            }
+            site.Sites = sites;
+
+        }
         public static void LoadSiteDetails(string spSiteURL, string username, string password)
+        {
+            SiteCache = new SPSite();
+            ClientContext context = GetSPOContext(spSiteURL, username, password);
+            context.Load(context.Web);
+           
+            // Execute the query to the server.
+            context.ExecuteQuery();
+
+            // Root site
+            SiteCache.Title = context.Web.Title;
+
+            // Root site permissions
+            SiteCache.Permissions = GetSitePermissionDetails(context, context.Web);
+            LoadSiteDetails(context, context.Web, SiteCache);
+            var ab = SiteCache;
+            //var lists = new List<SPList>();
+            //foreach (var item in context.Web.Lists)
+            //{
+            //    lists.Add(new SPList()
+            //    {
+            //        Title = item.Title,
+            //        Permissions = GetSitePermissionDetails(context, context.Web, item.Title)
+            //    });
+            //}
+
+            //var sites = new List<SPSite>();
+            //foreach (var web in context.Web.Webs)
+            //{
+               
+            //    sites.Add(new SPSite()
+            //    {
+            //        Title = web.Title,
+            //        Permissions = GetSitePermissionDetails(context, web),
+
+            //    });
+            //}
+           // SiteCache.Sites = sites;
+           // SiteCache.Lists = lists;
+        }
+
+        public static void LoadSiteDetails_back(string spSiteURL, string username, string password)
         {
             SiteCache = new SPSite();
             ClientContext context = GetSPOContext(spSiteURL, username, password);

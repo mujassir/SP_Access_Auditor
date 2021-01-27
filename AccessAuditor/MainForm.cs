@@ -114,7 +114,7 @@ namespace AccessAuditor
             if (siteInfo.Sites.Count() == 0 && siteInfo.Lists.Count() == 0)
                 return;
 
-            var sitesNodes = new TreeNode("Sites");
+            var sitesNodes = new TreeNode("Sub Sites");
             var listsNodes = new TreeNode("Lists");
 
             rootNode.Nodes.Add(sitesNodes);
@@ -127,14 +127,8 @@ namespace AccessAuditor
                 AddPermissionsToSummary(list);
                 listsNodes.Nodes.Add(child);
             }
-
-            foreach (var site in siteInfo.Sites)
-            {
-                var child = new TreeNode(site.Title);
-                child.Tag = site.Permissions;
-                AddPermissionsToSummary(site);
-                sitesNodes.Nodes.Add(child);
-            }
+            BuildRecursiveSiteNodes(siteInfo, sitesNodes);
+           
 
             treeViewSiteContent.BeginInvoke((MethodInvoker)delegate ()
             {
@@ -158,7 +152,18 @@ namespace AccessAuditor
             });
         }
 
+        private void BuildRecursiveSiteNodes(SPSite site, TreeNode node)
+        {
+            foreach (var subsSite in site.Sites)
+            {
+                var child = new TreeNode(subsSite.Title);
+                child.Tag = subsSite.Permissions;
+                AddPermissionsToSummary(subsSite);
+                node.Nodes.Add(child);
+                BuildRecursiveSiteNodes(subsSite, child);
+            }
 
+        }
 
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
@@ -250,6 +255,18 @@ namespace AccessAuditor
                 treeViewMemberAccess.Nodes.Add(listsNodes);
                 treeViewMemberAccess.ExpandAll();
             });
+        }
+        private void BuildRecursiveSiteNodesForMember(SPSite site, TreeNode node)
+        {
+            foreach (var subsSite in site.Sites)
+            {
+                var child = new TreeNode(subsSite.Title);
+                child.Tag = subsSite.Permissions;
+                AddPermissionsToSummary(subsSite);
+                node.Nodes.Add(child);
+                BuildRecursiveSiteNodes(subsSite, child);
+            }
+
         }
 
         private string GetPermissionString(string member, IEnumerable<SPPermission> permissions)
