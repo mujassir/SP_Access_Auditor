@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace AccessAuditor
 {
-    public partial class LoginForm : Form
+    public partial class LoginForm : BaseForm
     {
         public delegate void ValidateDelegate(string spSiteURL, string username, string password);
         public event ValidateDelegate OnValidate;

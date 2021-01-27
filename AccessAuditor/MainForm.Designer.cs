@@ -33,6 +33,7 @@ namespace AccessAuditor
             this.gridViewPermissions = new System.Windows.Forms.DataGridView();
             this.gridViewPermissionSummary = new System.Windows.Forms.DataGridView();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.btnExport = new System.Windows.Forms.Button();
             this.imageLoader = new System.Windows.Forms.PictureBox();
             this.btnLoad = new System.Windows.Forms.Button();
             this.txtSPSiteURL = new System.Windows.Forms.TextBox();
@@ -42,6 +43,7 @@ namespace AccessAuditor
             this.gbPermissions = new System.Windows.Forms.GroupBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.treeViewMemberAccess = new System.Windows.Forms.TreeView();
+            this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.gridViewPermissions)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gridViewPermissionSummary)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -88,6 +90,7 @@ namespace AccessAuditor
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.btnExport);
             this.groupBox1.Controls.Add(this.imageLoader);
             this.groupBox1.Controls.Add(this.btnLoad);
             this.groupBox1.Controls.Add(this.txtSPSiteURL);
@@ -101,11 +104,22 @@ namespace AccessAuditor
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "SharePoint Site";
             // 
+            // btnExport
+            // 
+            this.btnExport.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnExport.Location = new System.Drawing.Point(1186, 44);
+            this.btnExport.Name = "btnExport";
+            this.btnExport.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.btnExport.Size = new System.Drawing.Size(181, 39);
+            this.btnExport.TabIndex = 3;
+            this.btnExport.Text = "Export";
+            this.btnExport.UseVisualStyleBackColor = true;
+            this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
+            // 
             // imageLoader
             // 
-            this.imageLoader.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.imageLoader.Image = global::AccessAuditor.Properties.Resources.ajax_loader__1_;
-            this.imageLoader.Location = new System.Drawing.Point(1104, 30);
+            this.imageLoader.Location = new System.Drawing.Point(882, 30);
             this.imageLoader.Name = "imageLoader";
             this.imageLoader.Size = new System.Drawing.Size(120, 58);
             this.imageLoader.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
@@ -115,8 +129,7 @@ namespace AccessAuditor
             // 
             // btnLoad
             // 
-            this.btnLoad.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnLoad.Location = new System.Drawing.Point(917, 44);
+            this.btnLoad.Location = new System.Drawing.Point(695, 44);
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(181, 39);
             this.btnLoad.TabIndex = 1;
@@ -126,12 +139,10 @@ namespace AccessAuditor
             // 
             // txtSPSiteURL
             // 
-            this.txtSPSiteURL.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.txtSPSiteURL.Font = new System.Drawing.Font("Calibri", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtSPSiteURL.Location = new System.Drawing.Point(20, 46);
             this.txtSPSiteURL.Name = "txtSPSiteURL";
-            this.txtSPSiteURL.Size = new System.Drawing.Size(891, 37);
+            this.txtSPSiteURL.Size = new System.Drawing.Size(663, 37);
             this.txtSPSiteURL.TabIndex = 0;
             // 
             // groupBox2
@@ -249,6 +260,8 @@ namespace AccessAuditor
         private System.Windows.Forms.PictureBox imageLoader;
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.TreeView treeViewMemberAccess;
+        private System.Windows.Forms.Button btnExport;
+        private System.Windows.Forms.SaveFileDialog saveFileDialog1;
     }
 }
 
