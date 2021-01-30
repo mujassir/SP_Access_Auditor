@@ -72,7 +72,9 @@ namespace AccessAuditor.BusinessLogic
             // Root site permissions
             SiteCache.Permissions = GetSitePermissionDetails(context, context.Web);
             LoadSiteDetails(context, context.Web, SiteCache);
-            var ab = SiteCache;
+
+
+
             //var lists = new List<SPList>();
             //foreach (var item in context.Web.Lists)
             //{

@@ -1,6 +1,7 @@
 ﻿using AccessAuditor.BusinessLogic;
 using AccessAuditor.Models;
 using ClosedXML.Excel;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -84,27 +85,76 @@ namespace AccessAuditor
 
         private void LoadPermissions()
         {
+            var debug = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["debug"]);
+            SPSite testData = null;
+
+            if (debug)
+                testData = LoadJsonTestData();
+
             Task.Run(() =>
+        {
+            btnExport.BeginInvoke((MethodInvoker)delegate () { btnExport.Enabled = false; });
+            btnLoad.BeginInvoke((MethodInvoker)delegate () { btnLoad.Enabled = false; });
+            ShowLoader();
+            if (debug && testData != null)
             {
-                btnExport.BeginInvoke((MethodInvoker)delegate () { btnExport.Enabled = false; });
-                btnLoad.BeginInvoke((MethodInvoker)delegate () { btnLoad.Enabled = false; });
-                ShowLoader();
+
+                DataManager.SiteCache = testData;
+                LoadSiteInfo();
+
+            }
+            else
+            {
+
                 DataManager.LoadSiteDetails(_spSiteURL, _username, _password);
                 LoadSiteInfo();
-                HideLoader();
-                btnLoad.BeginInvoke((MethodInvoker)delegate () { btnLoad.Enabled = true; });
-                btnExport.BeginInvoke((MethodInvoker)delegate () { btnExport.Enabled = true; });
+                if (debug)
+                    SaveJsonTestData();
 
-            });
+            }
+
+            HideLoader();
+            btnLoad.BeginInvoke((MethodInvoker)delegate () { btnLoad.Enabled = true; });
+            btnExport.BeginInvoke((MethodInvoker)delegate () { btnExport.Enabled = true; });
+
+        });
         }
 
+        public SPSite LoadJsonTestData()
+        {
+            SPSite data = null;
+            using (StreamReader r = new StreamReader("testdata.json"))
+            {
+                string json = r.ReadToEnd();
+                data = JsonConvert.DeserializeObject<SPSite>(json);
+            }
+            return data;
+        }
+        public void SaveJsonTestData()
+        {
+            var debug = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["debug"]);
+
+
+            if (debug)
+            {
+                SPSite data = null;
+                using (var sr = new StreamWriter("testdata.json"))
+                {
+                    sr.WriteLine(JsonConvert.SerializeObject(DataManager.SiteCache));
+                }
+            }
+
+        }
 
         private void LoadSiteInfo()
         {
 
 
             var siteInfo = DataManager.SiteCache;
-            treeViewSiteContent.Nodes.Clear();
+            //treeViewSiteContent.Nodes.Clear();
+
+            treeViewSiteContent.BeginInvoke((MethodInvoker)delegate () { treeViewSiteContent.Nodes.Clear(); });
+
             permissionSummaries = new List<PermissionSummary>();
 
             var rootNode = new TreeNode(siteInfo.Title);
@@ -114,21 +164,11 @@ namespace AccessAuditor
             if (siteInfo.Sites.Count() == 0 && siteInfo.Lists.Count() == 0)
                 return;
 
-            var sitesNodes = new TreeNode("Sub Sites");
-            var listsNodes = new TreeNode("Lists");
 
-            rootNode.Nodes.Add(sitesNodes);
-            rootNode.Nodes.Add(listsNodes);
+            LoadSiteInfo(siteInfo, rootNode);
 
-            foreach (var list in siteInfo.Lists)
-            {
-                var child = new TreeNode(list.Title);
-                child.Tag = list.Permissions;
-                AddPermissionsToSummary(list);
-                listsNodes.Nodes.Add(child);
-            }
-            BuildRecursiveSiteNodes(siteInfo, sitesNodes);
-           
+            //BuildRecursiveSiteNodes(siteInfo, sitesNodes);
+
 
             treeViewSiteContent.BeginInvoke((MethodInvoker)delegate ()
             {
@@ -150,6 +190,38 @@ namespace AccessAuditor
 
                 }).ToList();
             });
+        }
+
+
+        private void LoadSiteInfo(SPSite siteInfo, TreeNode rootNode)
+        {
+            if (siteInfo.Sites.Count() == 0 && siteInfo.Lists.Count() == 0)
+                return;
+
+            var sitesNodes = new TreeNode("Sub Sites");
+            var listsNodes = new TreeNode("Lists");
+            if (siteInfo.Sites.Count() > 0)
+                rootNode.Nodes.Add(sitesNodes);
+
+            rootNode.Nodes.Add(listsNodes);
+
+            foreach (var list in siteInfo.Lists)
+            {
+                var child = new TreeNode(list.Title);
+                child.Tag = list.Permissions;
+                AddPermissionsToSummary(list);
+                listsNodes.Nodes.Add(child);
+            }
+            foreach (var subsSite in siteInfo.Sites)
+            {
+                var child = new TreeNode(subsSite.Title);
+                child.Tag = subsSite.Permissions;
+                AddPermissionsToSummary(subsSite);
+                sitesNodes.Nodes.Add(child);
+                LoadSiteInfo(subsSite, child);
+            }
+
+
         }
 
         private void BuildRecursiveSiteNodes(SPSite site, TreeNode node)
@@ -373,7 +445,7 @@ namespace AccessAuditor
 
                 currentRow = 1;
                 var contenWisePermissionSheet = wb.Worksheets.Add("Content Wise Permissions");
-                
+
                 contenWisePermissionSheet.Cell(currentRow, 1).Value = "Site";
                 contenWisePermissionSheet.Cell(currentRow, 2).Value = "Subsite";
                 contenWisePermissionSheet.Cell(currentRow, 3).Value = "List/Library";
@@ -453,7 +525,7 @@ namespace AccessAuditor
                 memberWisePermissionSheet.Columns().AdjustToContents();
                 memberWisePermissionSheet.Rows().AdjustToContents();
 
-               
+
 
                 //using (MemoryStream memoryStream = SaveWorkbookToMemoryStream(wb))
                 //{
