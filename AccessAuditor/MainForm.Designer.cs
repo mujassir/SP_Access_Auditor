@@ -67,26 +67,37 @@ namespace AccessAuditor
             // 
             // gridViewPermissions
             // 
+            this.gridViewPermissions.AllowUserToAddRows = false;
+            this.gridViewPermissions.AllowUserToDeleteRows = false;
+            this.gridViewPermissions.AllowUserToResizeRows = false;
             this.gridViewPermissions.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.gridViewPermissions.BackgroundColor = System.Drawing.Color.White;
             this.gridViewPermissions.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.gridViewPermissions.Dock = System.Windows.Forms.DockStyle.Fill;
             this.gridViewPermissions.Location = new System.Drawing.Point(3, 27);
+            this.gridViewPermissions.MultiSelect = false;
             this.gridViewPermissions.Name = "gridViewPermissions";
+            this.gridViewPermissions.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.gridViewPermissions.Size = new System.Drawing.Size(678, 226);
             this.gridViewPermissions.TabIndex = 2;
             // 
             // gridViewPermissionSummary
             // 
+            this.gridViewPermissionSummary.AllowUserToAddRows = false;
+            this.gridViewPermissionSummary.AllowUserToDeleteRows = false;
+            this.gridViewPermissionSummary.AllowUserToResizeRows = false;
             this.gridViewPermissionSummary.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.DisplayedCells;
             this.gridViewPermissionSummary.BackgroundColor = System.Drawing.Color.White;
             this.gridViewPermissionSummary.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.gridViewPermissionSummary.Dock = System.Windows.Forms.DockStyle.Fill;
             this.gridViewPermissionSummary.Location = new System.Drawing.Point(3, 27);
+            this.gridViewPermissionSummary.MultiSelect = false;
             this.gridViewPermissionSummary.Name = "gridViewPermissionSummary";
+            this.gridViewPermissionSummary.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.gridViewPermissionSummary.Size = new System.Drawing.Size(677, 226);
             this.gridViewPermissionSummary.TabIndex = 2;
             this.gridViewPermissionSummary.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.gridViewPermissionSummary_CellContentClick);
+            this.gridViewPermissionSummary.RowEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.gridViewPermissionSummary_RowEnter);
             // 
             // groupBox1
             // 

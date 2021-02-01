@@ -157,15 +157,7 @@ namespace AccessAuditor
 
             permissionSummaries = new List<PermissionSummary>();
 
-            var rootNode = new TreeNode(siteInfo.Title);
-            rootNode.Tag = siteInfo.Permissions;
-            AddPermissionsToSummary(siteInfo);
-
-            if (siteInfo.Sites.Count() == 0 && siteInfo.Lists.Count() == 0)
-                return;
-
-
-            LoadSiteInfo(siteInfo, rootNode);
+            var rootNode = GetSiteInfoTreeNodes(siteInfo);
 
             //BuildRecursiveSiteNodes(siteInfo, sitesNodes);
 
@@ -192,50 +184,120 @@ namespace AccessAuditor
             });
         }
 
+        private TreeNode GetSiteInfoTreeNodes(SPSite siteInfo)
+        {
+            TreeNode rootNode = new TreeNode(siteInfo.Title)
+            {
+                Tag = siteInfo.Permissions
+            };
+            AddPermissionsToSummary(siteInfo);
 
+            if (siteInfo.Sites.Count() == 0 && siteInfo.Lists.Count() == 0) return rootNode;
+
+            LoadSiteInfo(siteInfo, rootNode);
+            return rootNode;
+        }
         private void LoadSiteInfo(SPSite siteInfo, TreeNode rootNode)
         {
             if (siteInfo.Sites.Count() == 0 && siteInfo.Lists.Count() == 0)
                 return;
 
-            var sitesNodes = new TreeNode("Sub Sites");
             var listsNodes = new TreeNode("Lists");
-            if (siteInfo.Sites.Count() > 0)
-                rootNode.Nodes.Add(sitesNodes);
-
-            rootNode.Nodes.Add(listsNodes);
-
             foreach (var list in siteInfo.Lists)
             {
-                var child = new TreeNode(list.Title);
-                child.Tag = list.Permissions;
+                var child = new TreeNode(list.Title)
+                {
+                    Tag = list.Permissions
+                };
                 AddPermissionsToSummary(list);
                 listsNodes.Nodes.Add(child);
             }
+            if (listsNodes.Nodes.Count > 0)
+                rootNode.Nodes.Add(listsNodes);
+
+            var sitesNodes = new TreeNode("Subsites");
+
             foreach (var subsSite in siteInfo.Sites)
             {
                 var child = new TreeNode(subsSite.Title);
+
                 child.Tag = subsSite.Permissions;
                 AddPermissionsToSummary(subsSite);
                 sitesNodes.Nodes.Add(child);
                 LoadSiteInfo(subsSite, child);
             }
-
+            if (sitesNodes.Nodes.Count > 0)
+                rootNode.Nodes.Add(sitesNodes);
 
         }
 
-        private void BuildRecursiveSiteNodes(SPSite site, TreeNode node)
+
+        private TreeNode GetSiteInfoTreeNodes(SPSite siteInfo, string filterByMemberAccess)
         {
-            foreach (var subsSite in site.Sites)
-            {
-                var child = new TreeNode(subsSite.Title);
-                child.Tag = subsSite.Permissions;
-                AddPermissionsToSummary(subsSite);
-                node.Nodes.Add(child);
-                BuildRecursiveSiteNodes(subsSite, child);
-            }
+            TreeNode rootNode = new TreeNode();
+            var access = siteInfo.Permissions.FirstOrDefault(p => p.Member == filterByMemberAccess);
+            if (access != null)
+                rootNode = new TreeNode(siteInfo.Title + "(" + access.Permissions + ")");
+            else
+                rootNode = new TreeNode("Root");
 
+            if (siteInfo.Sites.Count() == 0 && siteInfo.Lists.Count() == 0)
+                return rootNode;
+
+            LoadSiteInfo(siteInfo, rootNode, filterByMemberAccess);
+
+            return rootNode;
         }
+
+
+
+        private void LoadSiteInfo(SPSite siteInfo, TreeNode rootNode, string filterByMemberAccess)
+        {
+            if (siteInfo.Sites.Count() == 0 && siteInfo.Lists.Count() == 0)
+                return;
+
+            var listsNodes = new TreeNode("Lists");
+            foreach (var list in siteInfo.Lists)
+            {
+                var access = list.Permissions.FirstOrDefault(p => p.Member == filterByMemberAccess);
+                if (access == null) continue;
+                listsNodes.Nodes.Add(new TreeNode(list.Title + "(" + access.Permissions + ")"));
+            }
+            if (listsNodes.Nodes.Count > 0)
+                rootNode.Nodes.Add(listsNodes);
+
+            var sitesNodes = new TreeNode("Subsites");
+
+            foreach (var subsSite in siteInfo.Sites)
+            {
+                var access = subsSite.Permissions.FirstOrDefault(p => p.Member == filterByMemberAccess);
+                if (access != null)
+                {
+                    var child = new TreeNode(subsSite.Title + "(" + access.Permissions + ")");
+                    sitesNodes.Nodes.Add(child);
+                    LoadSiteInfo(subsSite, child, filterByMemberAccess);
+                }
+                else
+                {
+                    LoadSiteInfo(subsSite, rootNode, filterByMemberAccess);
+                }
+            }
+            if (sitesNodes.Nodes.Count > 0)
+                rootNode.Nodes.Add(sitesNodes);
+        }
+
+        //private void BuildRecursiveSiteNodes(SPSite site, TreeNode node)
+        //{
+        //    foreach (var subsSite in site.Sites)
+        //    {
+        //        var child = new TreeNode(subsSite.Title);
+        //        child.Tag = subsSite.Permissions;
+        //        AddPermissionsToSummary(subsSite);
+        //        node.Nodes.Add(child);
+        //        BuildRecursiveSiteNodes(subsSite, child);
+        //    }
+
+        //}
 
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
@@ -262,7 +324,7 @@ namespace AccessAuditor
                 if (permission.Permissions.Contains("Full Control")) entry.FullControl++;
                 if (permission.Permissions.Contains("Edit")) entry.Edit++;
                 if (permission.Permissions.Contains("Read")) entry.Read++;
-                if (permission.Permissions.Contains("LimitedAccess")) entry.LimitedAccess++;
+                if (permission.Permissions.Contains("Limited Access")) entry.LimitedAccess++;
                 entry.ListCollection.Add(list);
             }
         }
@@ -288,56 +350,8 @@ namespace AccessAuditor
 
         private void gridViewPermissionSummary_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0) return;
-            var permissionSummary = this.permissionSummaries[e.RowIndex];
-            LoadMemberAccess(permissionSummary);
 
-        }
-
-        private void LoadMemberAccess(PermissionSummary permission)
-        {
-
-
-            treeViewMemberAccess.Nodes.Clear();
-
-
-            if (permission.Sites == 0 && permission.Lists == 0)
-                return;
-
-            var sitesNodes = new TreeNode("Sites");
-            var listsNodes = new TreeNode("Lists");
-            foreach (var list in permission.ListCollection)
-            {
-                var title = string.Format("{0} ({1})", list.Title, GetPermissionString(permission.Member, list.Permissions));
-                var child = new TreeNode(title);
-                child.Tag = list.Permissions;
-                listsNodes.Nodes.Add(child);
-            }
-
-            foreach (var site in permission.SiteCollection)
-            {
-                var title = string.Format("{0} ({1})", site.Title, GetPermissionString(permission.Member, site.Permissions));
-                var child = new TreeNode(title);
-                child.Tag = site.Permissions;
-                sitesNodes.Nodes.Add(child);
-            }
-            treeViewMemberAccess.BeginInvoke((MethodInvoker)delegate ()
-            {
-                treeViewMemberAccess.Nodes.Add(sitesNodes);
-                treeViewMemberAccess.Nodes.Add(listsNodes);
-                treeViewMemberAccess.ExpandAll();
-            });
-        }
-        private void BuildRecursiveSiteNodesForMember(SPSite site, TreeNode node)
-        {
-            foreach (var subsSite in site.Sites)
-            {
-                var child = new TreeNode(subsSite.Title);
-                child.Tag = subsSite.Permissions;
-                AddPermissionsToSummary(subsSite);
-                node.Nodes.Add(child);
-                BuildRecursiveSiteNodes(subsSite, child);
-            }
+            //LoadMemberAccess(permissionSummary);
 
         }
 
@@ -378,6 +392,18 @@ namespace AccessAuditor
                 workbook.SaveAs(stream, new SaveOptions { EvaluateFormulasBeforeSaving = false, GenerateCalculationChain = false, ValidatePackage = false });
                 return stream;
             }
+        }
+
+
+        private void gridViewPermissionSummary_RowEnter(object sender, DataGridViewCellEventArgs e)
+        {
+
+            if (e.RowIndex < 0) return;
+            var permissionSummary = this.permissionSummaries[e.RowIndex];
+            var member = permissionSummary.Member;
+            treeViewMemberAccess.Nodes.Clear();
+            var rootNote = GetSiteInfoTreeNodes(DataManager.SiteCache, member);
+            treeViewMemberAccess.Nodes.Add(rootNote);
         }
 
         private void btnExport_Click(object sender, EventArgs e)
@@ -429,19 +455,6 @@ namespace AccessAuditor
 
                 memberPermissionSummarySheet.Columns().AdjustToContents();
                 memberPermissionSummarySheet.Rows().AdjustToContents();
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                 currentRow = 1;
                 var contenWisePermissionSheet = wb.Worksheets.Add("Content Wise Permissions");
@@ -544,5 +557,6 @@ namespace AccessAuditor
 
             }
         }
+
     }
 }
