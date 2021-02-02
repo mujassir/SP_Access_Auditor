@@ -60,31 +60,21 @@ namespace AccessAuditor.BusinessLogic
                 contenWisePermissionSheet.Row(CurrentRow).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
                 contenWisePermissionSheet.Row(CurrentRow).Style.Fill.BackgroundColor = XLColor.Yellow;
 
-                //first data row will start here
-                CurrentRow++;
-                contenWisePermissionSheet.Cell(CurrentRow, 1).Value = siteInfo.Title;
+                //site level permissions
 
+                foreach (var sitePermission in siteInfo.Permissions)
+                {
+                    CurrentRow++;
+                    contenWisePermissionSheet.Cell(CurrentRow, 1).Value = siteInfo.Title;
+                    contenWisePermissionSheet.Cell(CurrentRow, 4).Value = sitePermission.Member;
+                    contenWisePermissionSheet.Cell(CurrentRow, 5).Value = sitePermission.Permissions;
 
-                //foreach (var list in siteInfo.Lists)
-                //{
-                //    foreach (var listPermission in list.Permissions)
-                //    {
-                //        CurrentRow++;
-                //        contenWisePermissionSheet.Cell(CurrentRow, 1).Value = siteInfo.Title;
-                //        contenWisePermissionSheet.Cell(CurrentRow, 3).Value = list.Title;
-                //        contenWisePermissionSheet.Cell(CurrentRow, 4).Value = listPermission.Member;
-                //        contenWisePermissionSheet.Cell(CurrentRow, 5).Value = listPermission.Permissions;
+                }
 
-                //    }
-                //}
-                BuildRows(siteInfo, contenWisePermissionSheet);
-
-               
-
+                BuildRowsForContentWiseAccess(siteInfo, contenWisePermissionSheet);
 
                 contenWisePermissionSheet.Columns().AdjustToContents();
                 contenWisePermissionSheet.Rows().AdjustToContents();
-
 
                 var memberWisePermissionSheet = wb.Worksheets.Add("Members Wise Permission");
 
@@ -100,23 +90,15 @@ namespace AccessAuditor.BusinessLogic
 
                 foreach (var summary in permissionSummaries)
                 {
-                    foreach (var site in summary.SiteCollection)
+                    foreach (var sitePermission in siteInfo.Permissions.Where(p => p.Member == summary.Member))
                     {
                         CurrentRow++;
                         memberWisePermissionSheet.Cell(CurrentRow, 1).Value = summary.Member;
-                        memberWisePermissionSheet.Cell(CurrentRow, 2).Value = site.Title;
-                        memberWisePermissionSheet.Cell(CurrentRow, 4).Value = site.Permissions;
+                        memberWisePermissionSheet.Cell(CurrentRow, 2).Value = siteInfo.Title;
+                        memberWisePermissionSheet.Cell(CurrentRow, 4).Value = sitePermission.Permissions;
                     }
 
-                    foreach (var list in summary.ListCollection)
-                    {
-                        CurrentRow++;
-                        memberWisePermissionSheet.Cell(CurrentRow, 1).Value = summary.Member;
-                        memberWisePermissionSheet.Cell(CurrentRow, 3).Value = list.Title;
-                        memberWisePermissionSheet.Cell(CurrentRow, 4).Value = list.Permissions;
-                    }
-
-
+                    BuildRowsForMemberWiseAccess(siteInfo, memberWisePermissionSheet, summary.Member);
                 }
                 memberWisePermissionSheet.Columns().AdjustToContents();
                 memberWisePermissionSheet.Rows().AdjustToContents();
@@ -124,40 +106,55 @@ namespace AccessAuditor.BusinessLogic
             }
 
         }
-        public static void BuildRows(SPSite siteInfo, IXLWorksheet contenWisePermissionSheet)
+        private static void BuildRowsForContentWiseAccess(SPSite siteInfo, IXLWorksheet worksheetRow)
         {
-
             foreach (var list in siteInfo.Lists)
             {
                 foreach (var listPermission in list.Permissions)
                 {
                     CurrentRow++;
-                    contenWisePermissionSheet.Cell(CurrentRow, 1).Value = siteInfo.Title;
-                    contenWisePermissionSheet.Cell(CurrentRow, 3).Value = list.Title;
-                    contenWisePermissionSheet.Cell(CurrentRow, 4).Value = listPermission.Member;
-                    contenWisePermissionSheet.Cell(CurrentRow, 5).Value = listPermission.Permissions;
-
+                    worksheetRow.Cell(CurrentRow, 1).Value = siteInfo.Title;
+                    worksheetRow.Cell(CurrentRow, 3).Value = list.Title;
+                    worksheetRow.Cell(CurrentRow, 4).Value = listPermission.Member;
+                    worksheetRow.Cell(CurrentRow, 5).Value = listPermission.Permissions;
                 }
             }
-
             foreach (var subSite in siteInfo.Sites)
             {
-
-                
-
                 foreach (var subSitePermission in subSite.Permissions)
                 {
                     CurrentRow++;
-                    contenWisePermissionSheet.Cell(CurrentRow, 1).Value = siteInfo.Title;
-                    contenWisePermissionSheet.Cell(CurrentRow, 2).Value = subSite.Title;
-                    contenWisePermissionSheet.Cell(CurrentRow, 4).Value = subSitePermission.Member;
-                    contenWisePermissionSheet.Cell(CurrentRow, 5).Value = subSitePermission.Permissions;
+                    worksheetRow.Cell(CurrentRow, 1).Value = siteInfo.Title;
+                    worksheetRow.Cell(CurrentRow, 2).Value = subSite.Title;
+                    worksheetRow.Cell(CurrentRow, 4).Value = subSitePermission.Member;
+                    worksheetRow.Cell(CurrentRow, 5).Value = subSitePermission.Permissions;
                 }
-             
+                BuildRowsForContentWiseAccess(subSite, worksheetRow);
+            }
+        }
 
-                BuildRows(subSite,contenWisePermissionSheet);
-
-
+        private static void BuildRowsForMemberWiseAccess(SPSite siteInfo, IXLWorksheet worksheetRow, string filterByMemberAccess)
+        {
+            foreach (var list in siteInfo.Lists)
+            {
+                foreach (var listPermission in list.Permissions.Where(p => p.Member == filterByMemberAccess))
+                {
+                    CurrentRow++;
+                    worksheetRow.Cell(CurrentRow, 1).Value = filterByMemberAccess;
+                    worksheetRow.Cell(CurrentRow, 3).Value = list.Title;
+                    worksheetRow.Cell(CurrentRow, 4).Value = listPermission.Permissions;
+                }
+            }
+            foreach (var subSite in siteInfo.Sites)
+            {
+                foreach (var subSitePermission in subSite.Permissions.Where(p => p.Member == filterByMemberAccess))
+                {
+                    CurrentRow++;
+                    worksheetRow.Cell(CurrentRow, 1).Value = filterByMemberAccess;
+                    worksheetRow.Cell(CurrentRow, 2).Value = subSite.Title;
+                    worksheetRow.Cell(CurrentRow, 4).Value = subSitePermission.Permissions;
+                }
+                BuildRowsForMemberWiseAccess(subSite, worksheetRow, filterByMemberAccess);
             }
         }
     }

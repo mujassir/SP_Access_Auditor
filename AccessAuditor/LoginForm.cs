@@ -33,6 +33,14 @@ namespace AccessAuditor
 
         private void button1_Click(object sender, EventArgs e)
         {
+            if (txtUsername.Text.Trim().Length == 0
+                || txtPassword.Text.Trim().Length == 0
+                || txtSPSiteURL.Text.Trim().Length == 0
+                ) {
+                MessageBox.Show("Please provide credentials to proceed", "Required Information");
+                return;
+            }
+
             imageLoader.Show();
             Task.Run(() =>
             {
